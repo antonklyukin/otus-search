@@ -13,9 +13,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 def get_google_page():
 
-    driver = webdriver.Firefox("/home/antony/.local/bin/")
+    driver = webdriver.Firefox('/home/antony/.local/bin/')
     time.sleep(3)
-    driver.get("http://www.google.com")
+    driver.get('http://www.google.com')
 
     submit_element = driver.find_element_by_name("q")
     submit_element.send_keys("NASA")
