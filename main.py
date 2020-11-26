@@ -1,223 +1,74 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# ЗАДАНИЕ 01
+# Консольная утилита по сбору ссылок с сайтов
+# -------------------------------------------
 
-from urllib.parse import urlparse
-import argparse
-import bs4
-import requests
-import re
+# Пример использования:
+# python main.py гагарин yandex.ru 3000 -r csv
+# python main.py синхрофазотрон google.com 1000 json
 
-# python3 main.py автомобиль yandex.ru 30 -r csv
+from otus_crawler.argparser import get_args
+from otus_crawler.webparser import (parse_yandex, parse_google,
+                                    get_urls_by_url, crawl_urls)
+from otus_crawler.serializer import export_urls
 
 
-def get_args():
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "keyword",
-        type=str,
-        default="Юпитер",
-        help="enter search keyword (Default: Юпитер)",
-    )
-    parser.add_argument(
-        "searchengine",
-        type=str,
-        default="google.com",
-        choices=["google.com", "yandex.ru"],
-        help="select search engine (Default: wikipedia.org)",
-    )
-    parser.add_argument(
-        "number", type=int, default=30, help="enter number of results (Default: 30)"
-    )
-    parser.add_argument(
-        "-r",
-        "--recursive",
-        action="store_true",
-        help="recursive search (Default: False)",
-    )
-    parser.add_argument(
-        "export_format",
-        type=str,
-        default="csv",
-        choices=["csv", "xml", "json"],
-        help="enter export format (Default: csv)",
-    )
-
-    return parser.parse_args()
-
-class Link:
+def process_urls(urls: list, number_of_urls: int, recursively: bool) -> list:
     """
-    Класс гиперссылки
-    """
-    __text = str()
-    __url = str()
-
-    def set_text(self, text):
-        self.__text = text
-
-    def get_text(self):
-        return self.__text
-
-    def set_url(self, url):
-        self.__url = url
-
-    def get_url(self):
-        return self.__url
-
-    def __init__(self, url, text):
-        self.__url = url
-        self.__text = text
-
-    def __repr__(self):
-        print('URL: ' + str(self.get_url()) + '\n' + 'URL Text: ' + str(self.get_text()))
-
-
-class Page:
-    """
-    Класс страницы
-    """
-    __html_code = str()
-    __url = str()
-
-    def set_html_code(self, html_code):
-        self.__html_code = html_code
-
-    def get_html_code(self):
-        return self.__html_code
-
-    def set_url(self, url):
-        self.__url = url
-
-    def get_url(self):
-        return self.__url
-
-    def __init__(self, url):
-        self.__url = url
-        self.get_page_html_code()
-
-    def get_page_html_code(self):
-        headers_get = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "ru_RU,en-US,en,ru;q=0.5",
-            "Accept-Encoding": "gzip, deflate",
-            "DNT": "1",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-        }
-
-        session = requests.Session()
-        req = session.get(self.__url, headers=headers_get)
-        req.encoding = req.apparent_encoding
-
-        self.__html_code = req.text
-
-
-
-def get_page_from_file(page="google_req.html"):
-    """
-    Функция извлечения страницы по ссылке
+    Функция сбора ссылок
     """
 
-    f = open(page)
-    page_content = f.read()
-    return page_content
+    found_urls = list()
+    if not recursively:
+        #"Добор" ссылок с поисковиков в случае нехватки нужного количества
+        # ссылок не реализован, лучше воспользоваться ключом -r
 
+        # Добавляем ссылки, найденные в поисковиках
+        found_urls.extend(urls)
 
-def parse_google_links():
-    links_dict = list()
-    html_page = get_page_from_file()
-    page_html_tree = bs4.BeautifulSoup(html_page, "lxml")
-    div_rc_list = page_html_tree.select('div[class="rc"]')
+        for url in urls:
 
-    for div_rc in div_rc_list:
-        a_tags = div_rc.find_all("a")
-        for a in a_tags:
-            a_from_cache = (
-                True
-                if "webcache.googleusercontent.com" not in a.attrs["href"]
-                else False
-            )
-            a_not_related = True if "search?q=related" not in a.attrs["href"] else False
-            a_has_hash = True if "#" in a.attrs["href"] else False
+            urls_from_url = get_urls_by_url(url)
 
-            if not a_has_hash and a_not_related and a_from_cache:
-                links_dict.append([a.attrs["href"], a.text])
-    return links_dict
+            found_urls.extend(urls_from_url)
+            # Останавливаем сбор ссылок, если их число больше нужного
+            if len(found_urls) >= number_of_urls:
+                break
+        # Отсекаем излишек ссылок
+        found_urls = found_urls[:number_of_urls]
 
+    else:
+        # Начинаем рекурсивный сбор
+        found_urls = crawl_urls(urls, number_of_urls)
 
-def parse_yandex_links():
-    links_list = list()
-    html_page = get_page_from_file("yandex_req.html")
-    page_html_tree = bs4.BeautifulSoup(html_page, "lxml")
-    li_list = page_html_tree.select('li[class="serp-item"]')
-
-    for list_item in li_list:
-        a_tag = list_item.find("a")
-        a_tag_href = a_tag.attrs["href"]
-        a_is_from_yandex = True if "yandex.ru" in a_tag_href else False
-        if not a_is_from_yandex:
-            link = Link(str.lower(a_tag_href), a_tag.text)
-            links_list.append(link)
-
-    return links_list
-
-
-def urls_reader(page_html_code):
-    page = bs4.BeautifulSoup(page_html_code, "lxml")
-
-    a_tags = page.find_all("a")
-
-    # if len(a_tags) < 1:
-    #     raise ValueError('No anchor tags found')
-
-    for a_tag in a_tags:
-        yield a_tag
-
-
-def get_domain_from_url(url):
-    return urlparse(url).netloc
-
-
-def get_urls_from_page(page):
-
-    domain = get_domain_from_url(page.get_url())
-
-    reg = re.compile(r"[^\s\n]+")
-
-    for url in urls_reader(page.get_page_html_code()):
-        if not ('href' in url.attrs):
-            next
-        if url.attrs['href'].startswith("/"):
-            url.attrs['href'] = domain + url.attrs['href']
-        if (reg.match(url.attrs['href'])) and ("#" not in url.attrs['href']):
-            print(url.text, url.attrs['href'], "\n")
+    return found_urls
 
 
 def main():
+
     args = get_args()
 
     keyword = args.keyword
-    searchengine = args.searchengine
-    number = args.number
-    recursive = args.recursive
+    search_engine = args.search_engine
+    number_of_urls = args.number
+    recursively = args.recursively  # True or False
     export_format = args.export_format
 
-    urls_list = parse_yandex_links()
+    urls = list()
 
-    print(urls_list)
+    if search_engine == 'yandex.ru':
+        # Ограничиваем количество запросов к поисковикам одной страницей выдачи
+        urls = parse_yandex(keyword)
 
-    # test_page = Page(urls_list[1][0])
+    elif search_engine == 'google.com':
+        urls = parse_google(keyword)
 
-    # get_urls_from_page(test_page)
+    urls = process_urls(urls, number_of_urls, recursively)
 
-
+    export_urls(urls, export_format)
 
 
 if __name__ == "__main__":
     main()
-
-# Александр Телеграм
-# +16692138826 

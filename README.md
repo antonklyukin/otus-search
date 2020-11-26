@@ -1,5 +1,9 @@
-OTUS Search Utility
-===================
+OTUS Crawler
+============
 
-Utility for scrapig data from search engines to CSV and JSON files.
+* Утилита по сбору ссылок с интернет-страниц.
+* Реализован начальный сбор ссылок с сайтов yandex.ru, google.com
+* Реализован рекурсивный поиск по ссылкам
+* Реализован экспорт собранных ссылок в форматы CSV и JSON
+
 
