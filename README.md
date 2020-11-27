@@ -1,5 +1,5 @@
 OTUS Crawler
-------------------------------------------
+============
 
 Утилита по сбору ссылок с интернет-страниц
 ------------------------------------------
@@ -9,7 +9,7 @@ OTUS Crawler
 
 Пример использования:
 
-$ python -m otus_search гагарин yandex.ru 3000 -r csv
-$ python -m otus_search синхрофазотрон google.com 1000 json
+**$ python -m otus_search гагарин yandex.ru 3000 -r csv**    
+**$ python -m otus_search синхрофазотрон google.com 1000 json**  
 
 
