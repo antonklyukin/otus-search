@@ -6,13 +6,13 @@
 # -------------------------------------------
 
 # Пример использования:
-# python main.py гагарин yandex.ru 3000 -r csv
-# python main.py синхрофазотрон google.com 1000 json
+# python -m otus_search гагарин yandex.ru 3000 -r csv
+# python -m otus_search синхрофазотрон google.com 1000 json
 
-from otus_crawler.argparser import get_args
-from otus_crawler.webparser import (parse_yandex, parse_google,
+from otus_search.argparser import get_args
+from otus_search.webparser import (parse_yandex, parse_google,
                                     get_urls_by_url, crawl_urls)
-from otus_crawler.serializer import export_urls
+from otus_search.serializer import export_urls
 
 
 def process_urls(urls: list, number_of_urls: int, recursively: bool) -> list:

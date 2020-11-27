@@ -17,8 +17,8 @@ def get_args():
         'search_engine',
         type=str,
         default="google.com",
-        choices=["google.com", "yandex.ru", "duckduckgo.org"],
-        help="select search engine (Default: duckduckgo.org)",
+        choices=["google.com", "yandex.ru"],
+        help="select search engine (Default: google.com)",
     )
     parser.add_argument('number',
                         type=int,
