@@ -18,7 +18,9 @@ def get_file_suffix():
 
 def save_to_csv(urls: int):
 
-    with open(f'urls-{get_file_suffix()}.csv', 'w') as csv_file:
+    file_name = f'urls-{get_file_suffix()}.csv'
+
+    with open(file_name, 'w') as csv_file:
 
         url_writer = csv.writer(csv_file,
                                 delimiter='\t',
@@ -28,16 +30,24 @@ def save_to_csv(urls: int):
         for url in urls:
             url_writer.writerow(url)
 
+    create_file_success_message(file_name)
+
+    export_success_message(len(urls), 'csv')
+
     return True
 
 
 def save_to_json(urls: int):
 
-    with open(f'urls-{get_file_suffix()}.json', 'w') as json_file:
+    file_name = f'urls-{get_file_suffix()}.json'
+
+    with open(file_name, 'w') as json_file:
 
         json.dump(urls, json_file, indent=4, ensure_ascii=False)
 
-    return True
+    create_file_success_message(file_name)
+
+    export_success_message(len(urls), 'json')
 
 
 def export_success_message(number_of_urls, export_format):
@@ -46,15 +56,14 @@ def export_success_message(number_of_urls, export_format):
           f' в формате {str.upper(export_format)}.')
 
 
+def create_file_success_message(file_name):
+    print(f'Создан файл {file_name}.')
+
+
 def export_urls(urls, export_format):
 
-    number_of_urls = len(urls)
-
     if export_format == 'csv':
-
-        if save_to_csv(urls):
-            export_success_message(number_of_urls, export_format)
+        save_to_csv(urls)
 
     elif export_format == 'json':
-        if save_to_json(urls):
-            export_success_message(number_of_urls, export_format)
+        save_to_json(urls)

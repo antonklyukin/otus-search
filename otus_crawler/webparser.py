@@ -106,26 +106,10 @@ def clear_a_text(href_text: str) -> str:
     return clean_href_text
 
 
-def get_urls_from_html(html_text, self_href) -> list:
-    """
-    Функция собирает все теги <a> на странице и возвращает список кортежей вида
-    (url_href, url_text)
-    :param html_page: tuple вида (page_href, page_html_text) 
-    """
-
-    page_href = self_href
-    page_html_text = html_text
+# FIXME: mccabe: . <110:0: 'get_urls_from_a_tags' 7>
+def get_urls_from_a_tags(a_tags, domain) -> list:
 
     found_urls_list = list()
-
-    domain = urlparse(page_href).netloc
-
-    page = bs4.BeautifulSoup(page_html_text, 'lxml')
-
-    a_tags = page.find_all('a')
-
-    if len(a_tags) < 1:
-        return [('', '')]
 
     for url in a_tags:
         # Отлавливаем ссылки без адресов, ссылки с адресами-заглушками
@@ -161,6 +145,32 @@ def get_urls_from_html(html_text, self_href) -> list:
         url = (new_url_address, clear_a_text(url.text))
 
         found_urls_list.append(url)
+
+    return found_urls_list
+
+
+def get_urls_from_html(html_text, self_href) -> list:
+    """
+    Функция собирает все теги <a> на странице и возвращает список кортежей вида
+    (url_href, url_text)
+    :param html_page: tuple вида (page_href, page_html_text) 
+    """
+
+    page_href = self_href
+    page_html_text = html_text
+
+    found_urls_list = list()
+
+    domain = urlparse(page_href).netloc
+
+    page = bs4.BeautifulSoup(page_html_text, 'lxml')
+
+    a_tags = page.find_all('a')
+
+    if len(a_tags) < 1:
+        return [('', '')]
+
+    found_urls_list = get_urls_from_a_tags(a_tags, domain)
 
     print(f'На данной странице найдено {len(found_urls_list)} ссылок.')
 
